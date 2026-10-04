@@ -15,8 +15,8 @@ const supabaseUrl = process.env.SUPABASE_URL || ' SUA_URL_SUPABASE ';
 const supabaseKey = process.env.SUPABASE_ANON_KEY || ' SUA_CHAVE_SUPABASE ';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Configuração básica do Solana Devnet
-const solanaConnection = new Connection('https://api.devnet.solana.com', 'confirmed');
+// Importa a integração da Solana
+const { registrarAuditoriaNaSolana } = require('./services/solanaService');
 
 // Rota de Teste Inicial
 app.get('/', (req, res) => {
@@ -61,13 +61,17 @@ app.post('/api/sensor', async (req, res) => {
             enviarAlertaTelegram(meuChatId, analise.message);
         }
 
+        // Grava o log de auditoria permanentemente na blockchain da Solana (Devnet)
+        const logData = `[SENSOR: ${sensorId} | UMIDADE: ${soilMoisture}% | STATUS: ${analise.status}]`;
+        const hashBlockchain = await registrarAuditoriaNaSolana(logData);
+
         res.json({
             success: true,
             statusCalculado: analise.status,
             mensagemAlerta: analise.message,
             auditoriaBlockchain: {
                 rede: "Solana Devnet",
-                transacaoSimulada: "Audit_Log_Hash_Verified_OK"
+                hashTransacao: hashBlockchain
             }
         });
 
@@ -91,12 +95,16 @@ app.post('/api/comprar-insumo', async (req, res) => {
             });
         }
 
+        // Grava a aprovação do voucher na blockchain da Solana (Devnet)
+        const logVoucher = `[VOUCHER: APPROVED | VALOR: R$${purchaseAmount} | CAT: ${category} | LOJA: ${merchantName}]`;
+        const hashBlockchain = await registrarAuditoriaNaSolana(logVoucher);
+
         res.json({
             success: true,
             transacao: {
                 message: `Compra de R$ ${purchaseAmount} aprovada com sucesso na revenda ${merchantName}!`,
                 newBalance: 850.00,
-                solanaAudit: "Tx_Confirmed_Devnet_Secure"
+                solanaAudit: hashBlockchain
             }
         });
 

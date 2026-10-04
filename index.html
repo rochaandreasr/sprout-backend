@@ -123,7 +123,7 @@
                     statusDiv.innerHTML = `
                         <p class="text-emerald-400 font-semibold mb-1">✔ Dados processados com sucesso!</p>
                         <p class="text-slate-300">Status Calculado: <b>${resultado.statusCalculado}</b></p>
-                        <p class="text-slate-400 text-xs mt-2">Auditoria Solana: ${resultado.auditoriaBlockchain.rede || 'OK'}</p>
+                        <p class="text-slate-400 text-xs mt-2">Auditoria Solana: <a href="https://explorer.solana.com/tx/${resultado.auditoriaBlockchain.hashTransacao}?cluster=devnet" target="_blank" class="text-emerald-500 underline">Ver na Blockchain</a></p>
                     `;
                 } else {
                     statusDiv.innerHTML = `<span class="text-red-400">Erro: ${resultado.error}</span>`;
