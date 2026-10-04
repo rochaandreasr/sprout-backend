@@ -1,10 +1,12 @@
-const TelegramApi = require('node-telegram-bot-api');
+const TelegramBotModule = require('node-telegram-bot-api');
+// Lida com a exportação padrão do CommonJS nas versões mais recentes da biblioteca
+const TelegramBot = TelegramBotModule.default || TelegramBotModule;
 
 // Token do seu bot gerado pelo BotFather
 const TOKEN = process.env.TELEGRAM_TOKEN || 'COLOQUE_SEU_TOKEN_AQUI';
 
-// Inicializa o bot de forma segura para evitar erros de construtor
-const bot = new TelegramApi(TOKEN, { polling: true });
+// Inicializa o bot corretamente
+const bot = new TelegramBot(TOKEN, { polling: true });
 
 console.log('🤖 Bot do Telegram iniciado com sucesso!');
 
