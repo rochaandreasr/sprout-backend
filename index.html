@@ -1,166 +1,104 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sprout - Ecossistema Agrícola & Web3</title>
-    <!-- Tailwind CSS para estilização rápida e moderna -->
-    <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sprout - Agro DeFi & Zcash Privacy</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f6f8;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #2e7d32;
+      margin-top: 0;
+    }
+    .panel {
+      margin-top: 20px;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      background: #fafafa;
+    }
+    button {
+      background-color: #2e7d32;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    button:hover {
+      background-color: #1b5e20;
+    }
+    pre {
+      background: #263238;
+      color: #a7ffeb;
+      padding: 15px;
+      border-radius: 5px;
+      overflow-x: auto;
+      margin-top: 15px;
+    }
+  </style>
 </head>
-<body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col">
+<body>
 
-    <!-- Cabeçalho -->
-    <header class="bg-slate-800 border-b border-slate-700 p-4 shadow-md">
-        <div class="max-w-6xl mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-bold text-emerald-400 flex items-center gap-2">
-                🌱 Sprout <span class="text-xs bg-emerald-900 text-emerald-300 px-2 py-0.5 rounded-full">Solana Devnet</span>
-            </h1>
-            <div class="space-x-2">
-                <button onclick="mudarVisao('produtor')" id="btn-produtor" class="px-4 py-2 rounded-lg font-medium bg-emerald-600 text-white transition">Visão Produtor</button>
-                <button onclick="mudarVisao('cooperativa')" id="btn-cooperativa" class="px-4 py-2 rounded-lg font-medium bg-slate-700 text-slate-300 transition">Visão Cooperativa</button>
-            </div>
-        </div>
-    </header>
+  <div class="container">
+    <h1>🌱 Sprout: Automação Inteligente e Privada para o Agro</h1>
+    <p>Plataforma DeFi unindo IoT no campo e privacidade de crédito com Zcash.</p>
 
-    <!-- Conteúdo Principal -->
-    <main class="flex-grow max-w-6xl mx-auto p-6 w-full grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="panel">
+      <h3>Simulação de Alerta de Solo & Voucher Blindado (Zcash)</h3>
+      <p>Clique no botão abaixo para simular um sensor de solo enviando um nível crítico de umidade (12%) para o back-end no Render:</p>
+      
+      <button id="btnSimular">Simular Sensor Crítico e Gerar Voucher</button>
+      
+      <h4>Resultado da API:</h4>
+      <pre id="resultado">Aguardando ação...</pre>
+    </div>
+  </div>
 
-        <!-- PAINEL 1: VISÃO PRODUTOR (IoT / Solo) -->
-        <div id="painel-produtor" class="bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-xl flex flex-col justify-between">
-            <div>
-                <h2 class="text-lg font-semibold text-emerald-400 mb-4 flex items-center gap-2">🚜 Painel do Produtor (IoT & Campo)</h2>
-                <p class="text-sm text-slate-400 mb-6">Monitore os dados em tempo real coletados via rede LoRa do seu sensor no solo.</p>
-                
-                <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 mb-4">
-                    <label class="block text-xs uppercase tracking-wider text-slate-400 mb-1">Simular Umidade do Solo (%)</label>
-                    <div class="flex gap-2">
-                        <input type="number" id="inputUmidade" value="8" class="bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 w-full text-white focus:outline-none focus:border-emerald-500">
-                        <button onclick="enviarSensor()" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-lg font-semibold transition">Enviar</button>
-                    </div>
-                </div>
+  <script>
+    // Substitua 'SEU-APP-NO-RENDER.onrender.com' pela URL real do seu serviço no Render
+    const URL_BACKEND = 'https://sprout-backend-qloh.onrender.com/api/alerta-solo';
 
-                <div id="statusSensor" class="bg-slate-900 p-4 rounded-xl border border-slate-700 text-sm">
-                    <span class="text-slate-500">Aguardando envio de dados...</span>
-                </div>
-            </div>
-            <div class="text-xs text-slate-500 mt-4">Camada de auditoria: Solana Devnet ativa</div>
-        </div>
+    document.getElementById('btnSimular').addEventListener('click', async () => {
+      const resultadoPre = document.getElementById('resultado');
+      resultadoPre.textContent = "Enviando telemetria para o servidor no Render...";
 
-        <!-- PAINEL 2: VISÃO COOPERATIVA (Vouchers & Insumos) -->
-        <div id="painel-cooperativa" class="bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-xl flex flex-col justify-between hidden">
-            <div>
-                <h2 class="text-lg font-semibold text-emerald-400 mb-4 flex items-center gap-2">🏢 Painel da Cooperativa (Insumos)</h2>
-                <p class="text-sm text-slate-400 mb-6">Validação de créditos e vouchers restritos de insumos agrícolas.</p>
+      try {
+        const resposta = await fetch(URL_BACKEND, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            produtorId: "produtor_joao_silva",
+            umidade: 12, // Abaixo de 20% dispara o alerta crítico
+            valorInsumos: 750
+          })
+        });
 
-                <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 mb-4 space-y-3">
-                    <div>
-                        <label class="block text-xs uppercase tracking-wider text-slate-400 mb-1">Valor da Compra (R$)</label>
-                        <input type="number" id="inputValor" value="150" class="bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 w-full text-white focus:outline-none focus:border-emerald-500">
-                    </div>
-                    <div>
-                        <label class="block text-xs uppercase tracking-wider text-slate-400 mb-1">Categoria do Insumo</label>
-                        <input type="text" id="inputCategoria" value="Fertilizantes" class="bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 w-full text-white focus:outline-none focus:border-emerald-500">
-                    </div>
-                    <div>
-                        <label class="block text-xs uppercase tracking-wider text-slate-400 mb-1">Nome da Revenda / Loja</label>
-                        <input type="text" id="inputLoja" value="AgroCoop Central" class="bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 w-full text-white focus:outline-none focus:border-emerald-500">
-                    </div>
-                    <button onclick="comprarInsumo()" class="w-full bg-emerald-600 hover:bg-emerald-500 py-2 rounded-lg font-semibold transition mt-2">Validar e Aprovar Voucher</button>
-                </div>
+        const dados = await resposta.json();
+        resultadoPre.textContent = JSON.stringify(dados, null, 2);
+      } catch (erro) {
+        resultadoPre.textContent = "Erro ao conectar com o back-end: " + erro.message + "\n\nVerifique se a URL do Render está correta.";
+      }
+    });
+  </script>
 
-                <div id="statusCompra" class="bg-slate-900 p-4 rounded-xl border border-slate-700 text-sm">
-                    <span class="text-slate-500">Nenhuma transação recente.</span>
-                </div>
-            </div>
-            <div class="text-xs text-slate-500 mt-4">Liquidação via smart contract / privacidade</div>
-        </div>
-
-    </main>
-
-    <!-- Rodapé -->
-    <footer class="text-center py-4 text-xs text-slate-500 border-t border-slate-800">
-        Sprout Platform &copy; 2026 - Desenvolvido para o Hackathon Solana
-    </footer>
-
-    <!-- Script de Integração com a API do Render -->
-    <script>
-        // Altere para a URL do seu back-end no Render
-        const API_URL = "https://sprout-backend-qloh.onrender.com";
-
-        function mudarVisao(visao) {
-            const painelProdutor = document.getElementById('painel-produtor');
-            const painelCooperativa = document.getElementById('painel-cooperativa');
-            const btnProdutor = document.getElementById('btn-produtor');
-            const btnCooperativa = document.getElementById('btn-cooperativa');
-
-            if (visao === 'produtor') {
-                painelProdutor.classList.remove('hidden');
-                painelCooperativa.classList.add('hidden');
-                btnProdutor.className = "px-4 py-2 rounded-lg font-medium bg-emerald-600 text-white transition";
-                btnCooperativa.className = "px-4 py-2 rounded-lg font-medium bg-slate-700 text-slate-300 transition";
-            } else {
-                painelProdutor.classList.add('hidden');
-                painelCooperativa.classList.remove('hidden');
-                btnProdutor.className = "px-4 py-2 rounded-lg font-medium bg-slate-700 text-slate-300 transition";
-                btnCooperativa.className = "px-4 py-2 rounded-lg font-medium bg-emerald-600 text-white transition";
-            }
-        }
-
-        async function enviarSensor() {
-            const umidade = parseFloat(document.getElementById('inputUmidade').value);
-            const statusDiv = document.getElementById('statusSensor');
-            statusDiv.innerHTML = `<span class="text-yellow-400">Enviando dados do sensor para o Render...</span>`;
-
-            try {
-                const response = await fetch(`${API_URL}/api/sensor`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ sensorId: "sensor_frontend_01", soilMoisture: umidade })
-                });
-                const resultado = await response.json();
-
-                if (resultado.success) {
-                    statusDiv.innerHTML = `
-                        <p class="text-emerald-400 font-semibold mb-1">✔ Dados processados com sucesso!</p>
-                        <p class="text-slate-300">Status Calculado: <b>${resultado.statusCalculado}</b></p>
-                        <p class="text-slate-400 text-xs mt-2">Auditoria Solana: <a href="https://explorer.solana.com/tx/${resultado.auditoriaBlockchain.hashTransacao}?cluster=devnet" target="_blank" class="text-emerald-500 underline">Ver na Blockchain</a></p>
-                    `;
-                } else {
-                    statusDiv.innerHTML = `<span class="text-red-400">Erro: ${resultado.error}</span>`;
-                }
-            } catch (err) {
-                statusDiv.innerHTML = `<span class="text-red-400">Erro de conexão com o servidor.</span>`;
-            }
-        }
-
-        async function comprarInsumo() {
-            const amount = parseFloat(document.getElementById('inputValor').value);
-            const category = document.getElementById('inputCategoria').value;
-            const merchantName = document.getElementById('inputLoja').value;
-            const statusDiv = document.getElementById('statusCompra');
-
-            statusDiv.innerHTML = `<span class="text-yellow-400">Validando voucher na rede...</span>`;
-
-            try {
-                const response = await fetch(`${API_URL}/api/comprar-insumo`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ purchaseAmount: amount, category, merchantName })
-                });
-                const resultado = await response.json();
-
-                if (resultado.success) {
-                    statusDiv.innerHTML = `
-                        <p class="text-emerald-400 font-semibold mb-1">✔ ${resultado.transacao.message}</p>
-                        <p class="text-slate-300">Novo Saldo do Voucher: <b>R$ ${resultado.transacao.newBalance}</b></p>
-                    `;
-                } else {
-                    statusDiv.innerHTML = `<span class="text-red-400 font-semibold">❌ ${resultado.error}</span>`;
-                }
-            } catch (err) {
-                statusDiv.innerHTML = `<span class="text-red-400">Erro de conexão com o servidor.</span>`;
-            }
-        }
-    </script>
 </body>
 </html>

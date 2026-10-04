@@ -1,120 +1,93 @@
+// Importação de dependências principais
 const express = require('express');
 const cors = require('cors');
-const { createClient } = require('@supabase/supabase-js');
-const { Connection, Keypair, LAMPORTS_PER_SOL } = require('@solana/web3.js');
+require('dotenv').config();
 
-// Importa a função do bot do Telegram que criamos acima
-const { enviarAlertaTelegram } = require('./services/telegramBot');
-
+// Inicialização do aplicativo Express
 const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Configuração do Supabase (lê das variáveis de ambiente)
-const supabaseUrl = process.env.SUPABASE_URL || ' SUA_URL_SUPABASE ';
-const supabaseKey = process.env.SUPABASE_ANON_KEY || ' SUA_CHAVE_SUPABASE ';
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Porta do servidor (usa a variável de ambiente ou 3000 como padrão)
+const PORT = process.env.PORT || 3000;
 
-// Importa a integração da Solana
-const { registrarAuditoriaNaSolana } = require('./services/solanaService');
-
-// Rota de Teste Inicial
-app.get('/', (req, res) => {
-    res.json({ status: "Online", projeto: "Sprout Backend & IoT" });
-});
-
-// Função interna de regra de negócio do Sensor (IoT)
-function checkSoilAndAlert(soilMoisture) {
-    if (soilMoisture < 15) {
-        return {
-            status: "ALERTA_SECA",
-            message: `Atenção! A umidade do solo atingiu ${soilMoisture}%. Risco crítico para a lavoura. Necessária irrigação e liberação imediata de insumos.`
-        };
-    }
-    return {
-        status: "ESTAVEL",
-        message: `Umidade do solo em ${soilMoisture}%. Níveis normais.`
+// ---------------------------------------------------------
+// Serviço de Integração Zcash (Padrões ZIP-316 / ZIP-321 simulados para Testnet/Regtest)
+// ---------------------------------------------------------
+class ZcashService {
+  async gerarVoucherBlindado(produtorId, valorInsumos) {
+    // Simulando a criação de um endereço blindado (Shielded Address - padrão ZIP-316)
+    const enderecoBlindado = `ztestsapling1sprout${Math.random().toString(36).substring(2, 15)}`;
+    
+    // Simulando a transação blindada de emissão do voucher de crédito para a cooperativa
+    const transacaoZcash = {
+      idTransacao: `zec_tx_${Date.now()}`,
+      produtor: produtorId,
+      valor: valorInsumos,
+      status: 'Protegido em Shielded Pool (Zcash Testnet)',
+      enderecoDestino: enderecoBlindado,
+      criadoEm: new Date().toISOString()
     };
+
+    console.log("Voucher blindado gerado com sucesso:", transacaoZcash);
+    return transacaoZcash;
+  }
 }
 
-// 1. ROTA DO SENSOR (Recebe dados da telemetria / Painel do Produtor)
-app.post('/api/sensor', async (req, res) => {
-    try {
-        const { sensorId, soilMoisture } = req.body;
+const zcashService = new ZcashService();
 
-        // Analisa o nível de umidade
-        const analise = checkSoilAndAlert(soilMoisture);
+// ---------------------------------------------------------
+// Rotas da API
+// ---------------------------------------------------------
 
-        // Salva no banco de dados Supabase
-        const { data, error } = await supabase
-            .from('leituras_sensor')
-            .insert([{ sensor_id: sensorId, umidade: soilMoisture, status: analise.status }]);
-
-        if (error) {
-            console.error("Erro ao salvar no Supabase:", error.message);
-        }
-
-        // Se o solo estiver seco, dispara automaticamente o alerta no Telegram!
-        if (analise.status === "ALERTA_SECA") {
-            // Cole aqui o seu Chat ID que o bot te deu no comando /start
-            const meuChatId = process.env.TELEGRAM_CHAT_ID || 'COLOQUE_SEU_CHAT_ID_AQUI';
-            enviarAlertaTelegram(meuChatId, analise.message);
-        }
-
-        // Grava o log de auditoria permanentemente na blockchain da Solana (Devnet)
-        const logData = `[SENSOR: ${sensorId} | UMIDADE: ${soilMoisture}% | STATUS: ${analise.status}]`;
-        const hashBlockchain = await registrarAuditoriaNaSolana(logData);
-
-        res.json({
-            success: true,
-            statusCalculado: analise.status,
-            mensagemAlerta: analise.message,
-            auditoriaBlockchain: {
-                rede: "Solana Devnet",
-                hashTransacao: hashBlockchain
-            }
-        });
-
-    } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
-    }
+// Rota raiz para testar se a API está no ar
+app.get('/', (req, res) => {
+  res.json({ 
+    status: 'online', 
+    projeto: 'Sprout Backend - Agro DeFi & Zcash Privacy',
+    versao: '1.0.0'
+  });
 });
 
-// 2. ROTA DE COMPRA DE INSUMOS (Painel da Cooperativa)
-app.post('/api/comprar-insumo', async (req, res) => {
-    try {
-        const { purchaseAmount, category, merchantName } = req.body;
+// Rota para receber dados do sensor IoT e verificar alerta crítico
+app.post('/api/alerta-solo', async (req, res) => {
+  try {
+    const { produtorId, umidade, valorInsumos } = req.body;
 
-        // Regra restrita: só permite se for da categoria de fertilizantes/corretivos
-        const categoriaPermitida = category.toLowerCase().includes('fertilizante') || category.toLowerCase().includes('corretivo');
-
-        if (!categoriaPermitida) {
-            return res.status(400).json({
-                success: false,
-                error: "Voucher recusado: O crédito restrito só pode ser utilizado para fertilizantes e corretivos de solo."
-            });
-        }
-
-        // Grava a aprovação do voucher na blockchain da Solana (Devnet)
-        const logVoucher = `[VOUCHER: APPROVED | VALOR: R$${purchaseAmount} | CAT: ${category} | LOJA: ${merchantName}]`;
-        const hashBlockchain = await registrarAuditoriaNaSolana(logVoucher);
-
-        res.json({
-            success: true,
-            transacao: {
-                message: `Compra de R$ ${purchaseAmount} aprovada com sucesso na revenda ${merchantName}!`,
-                newBalance: 850.00,
-                solanaAudit: hashBlockchain
-            }
-        });
-
-    } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
+    // Validação básica dos dados recebidos
+    if (umidade === undefined || !produtorId) {
+      return res.status(400).json({ 
+        sucesso: false, 
+        mensagem: 'Parâmetros inválidos. Envie produtorId e umidade.' 
+      });
     }
+
+    // Regra de negócio: se a umidade do solo estiver crítica (< 20%)
+    if (umidade < 20) {
+      // Gera o voucher utilizando a lógica de privacidade do Zcash (gasto zero em Testnet/Regtest)
+      const voucherPrivado = await zcashService.gerarVoucherBlindado(produtorId, valorInsumos || 500);
+
+      return res.status(200).json({
+        sucesso: true,
+        alertaCritico: true,
+        mensagem: 'Alerta crítico detectado! Voucher de insumos gerado com privacidade (Zcash Shielded Pool).',
+        voucher: voucherPrivado
+      });
+    }
+
+    return res.status(200).json({ 
+      sucesso: true, 
+      alertaCritico: false,
+      mensagem: 'Umidade do solo normal. Nenhuma ação necessária.' 
+    });
+
+  } catch (error) {
+    console.error('Erro ao processar alerta de solo:', error);
+    res.status(500).json({ sucesso: false, erro: error.message });
+  }
 });
 
-// Inicia o servidor na porta configurada (Render ou porta 3000 local)
-const PORT = process.env.PORT || 3000;
+// Inicialização do Servidor
 app.listen(PORT, () => {
-    console.log(`🚀 Servidor Sprout rodando na porta ${PORT}`);
+  console.log(`Servidor rodando na porta ${PORT}`);
 });
