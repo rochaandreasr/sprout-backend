@@ -14,7 +14,7 @@ app.get('/', (req, res) => {
   return res.status(200).json({ 
     status: 'Online', 
     projeto: 'Sprout Backend & IoT',
-    descricao: 'API de automação agrícola com privacidade baseada em Zcash (ZIP-321)' 
+    descricao: 'API de automação agrícola com privacidade baseada em Zcash (ZIP-321) e alertas via Telegram' 
   });
 });
 
@@ -46,10 +46,37 @@ app.post('/api/alerta-solo', async (req, res) => {
       // GERAÇÃO DA URI NO PADRÃO OFICIAL ZIP-321 (Exigido pelo edital)
       const uriZip321 = `zcash:${enderecoTestnet}?amount=${quantidadeTAZ}&memo=${memoTexto}`;
 
+      // DISPARO DO ALERTA NO TELEGRAM UTILIZANDO AS VARIÁVEIS DE AMBIENTE
+      const telegramToken = process.env.TELEGRAM_TOKEN;
+      const chatId = process.env.TELEGRAM_CHAT_ID;
+
+      if (telegramToken && chatId) {
+        try {
+          const textoTelegram = `🚨 *ALERTA CRÍTICO DE SOLO - SPROUT* 🌾\n\n` +
+                                `*Produtor:* ${produtorId || 'produtor_padrao'}\n` +
+                                `*Umidade:* ${umidade}%\n` +
+                                `*Status:* Voucher gerado (ZIP-321)\n\n` +
+                                `*URI Zcash:* \`${uriZip321}\``;
+
+          await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chat_id: chatId,
+              text: textoTelegram,
+              parse_mode: 'Markdown'
+            })
+          });
+          console.log("📲 Alerta enviado com sucesso para o Telegram!");
+        } catch (erroTelegram) {
+          console.error("⚠️ Falha ao enviar notificação para o Telegram:", erroTelegram);
+        }
+      }
+
       return res.status(200).json({
         sucesso: true,
         alertaCritico: true,
-        mensagem: "Alerta crítico detectado! Requisito de pagamento blindado gerado conforme o padrão ZIP-321 (Zcash Testnet).",
+        mensagem: "Alerta crítico detectado! Requisito de pagamento blindado gerado conforme o padrão ZIP-321 (Zcash Testnet) e notificação enviada via Telegram.",
         voucher: {
           idTransacao: idTransacaoId,
           produtor: produtorId || "produtor_padrao",
