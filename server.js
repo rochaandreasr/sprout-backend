@@ -9,19 +9,16 @@ const PORT = process.env.PORT || 3000;
 // Middlewares
 app.use(cors());
 app.use(express.json());
+app.use(express.static(__dirname)); // Serve arquivos estáticos (como o index.html)
 
 // Inicialização do cliente Supabase
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Rota raiz para verificar se o servidor está online
+// Rota raiz: serve o index.html automaticamente ou retorna status da API
 app.get('/', (req, res) => {
-  return res.status(200).json({ 
-    status: 'Online', 
-    projeto: 'Sprout Backend & IoT',
-    descricao: 'API com CRUD de produtores, automação Zcash ZIP-321 (Gasto Zero), Telegram e Supabase' 
-  });
+  res.sendFile(__dirname + '/index.html');
 });
 
 // ==========================================
@@ -113,10 +110,10 @@ app.post('/api/alerta-solo', async (req, res) => {
       const quantidadeTAZ = Number(valorInsumos) || 750;
       const memoTexto = encodeURIComponent(`Voucher Sprout - Produtor: ${nomeProdutor || 'Geral'}`);
 
-      // Geração da URI oficial ZIP-321 do Zcash (Testnet / Gasto Zero)
+      // Geração da URI oficial ZIP-321 do Zcash (Testnet / Gasto Zero)[cite: 1]
       const uriZip321 = `zcash:${enderecoTestnet}?amount=${quantidadeTAZ}&memo=${memoTexto}`;
 
-      // Disparo do Telegram (usa o chat ID enviado na requisição ou o padrão do .env)
+      // Disparo do Telegram
       const telegramToken = process.env.TELEGRAM_TOKEN;
       const chatIdDestino = telegramChatId || process.env.TELEGRAM_CHAT_ID;
 
@@ -183,8 +180,7 @@ app.post('/api/alerta-solo', async (req, res) => {
     return res.status(500).json({ sucesso: false, erro: erro.message });
   }
 });
-// Servir arquivos estáticos (como o index.html na raiz)
-app.use(express.static(__dirname));
+
 // Inicialização do Servidor
 app.listen(PORT, () => {
   console.log(`🚀 Servidor Sprout rodando na porta ${PORT}`);

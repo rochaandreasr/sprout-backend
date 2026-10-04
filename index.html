@@ -66,12 +66,12 @@
 </div>
 
 <script>
-    // URL da API (use localhost se testar local, ou a URL do Render quando publicar)
-    const API_URL = 'https://sprout-backend-qloh.onrender.com/api/alerta-solo'; // Deixe vazio se abrir via servidor local apontando para a mesma porta, ou ponha a URL do Render
+    // Insira abaixo a URL exata do seu serviço no Render (sem barra no final)
+    const API_URL = 'https://sprout-backend-xxxx.onrender.com';
 
     async function carregarProdutores() {
         try {
-            const res = await fetch('/api/produtores');
+            const res = await fetch(`${API_URL}/api/produtores`);
             const data = await res.json();
             const tbody = document.getElementById('tabelaProdutores');
             tbody.innerHTML = '';
@@ -107,7 +107,7 @@
         const telegram_chat_id = document.getElementById('telegram_chat_id').value;
 
         try {
-            const res = await fetch('/api/produtores', {
+            const res = await fetch(`${API_URL}/api/produtores`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ nome, localizacao, telegram_chat_id })
@@ -129,7 +129,7 @@
     async function excluirProdutor(id) {
         if (!confirm('Deseja realmente excluir este produtor?')) return;
         try {
-            const res = await fetch(`/api/produtores/${id}`, { method: 'DELETE' });
+            const res = await fetch(`${API_URL}/api/produtores/${id}`, { method: 'DELETE' });
             const data = await res.json();
             if (data.sucesso) {
                 carregarProdutores();
@@ -144,7 +144,7 @@
     async function simularAlerta(producerId, nomeProdutor, telegramChatId) {
         document.getElementById('resultado').innerText = "Processando alerta crítico e gerando URI ZIP-321...";
         try {
-            const res = await fetch('/api/alerta-solo', {
+            const res = await fetch(`${API_URL}/api/alerta-solo`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
