@@ -1,104 +1,171 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sprout - Agro DeFi & Zcash Privacy</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f4f6f8;
-      margin: 0;
-      padding: 20px;
-      color: #333;
-    }
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
-      background: white;
-      padding: 30px;
-      border-radius: 8px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    }
-    h1 {
-      color: #2e7d32;
-      margin-top: 0;
-    }
-    .panel {
-      margin-top: 20px;
-      padding: 20px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      background: #fafafa;
-    }
-    button {
-      background-color: #2e7d32;
-      color: white;
-      border: none;
-      padding: 12px 20px;
-      font-size: 16px;
-      border-radius: 5px;
-      cursor: pointer;
-      margin-top: 10px;
-    }
-    button:hover {
-      background-color: #1b5e20;
-    }
-    pre {
-      background: #263238;
-      color: #a7ffeb;
-      padding: 15px;
-      border-radius: 5px;
-      overflow-x: auto;
-      margin-top: 15px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sprout - Painel IoT e Zcash</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f6f9; color: #333; margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; text-align: center; }
+        .section { margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
+        input, button { padding: 10px; margin: 5px 0; width: 100%; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        button { background-color: #27ae60; color: white; border: none; font-weight: bold; cursor: pointer; }
+        button:hover { background-color: #219653; }
+        button.delete { background-color: #c0392b; width: auto; padding: 5px 10px; }
+        button.delete:hover { background-color: #a93226; }
+        button.alert { background-color: #e67e22; }
+        button.alert:hover { background-color: #d35400; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 14px; }
+        th { background-color: #f2f2f2; }
+        #resultado { background: #e8f8f5; padding: 10px; border-radius: 4px; margin-top: 15px; white-space: pre-wrap; font-family: monospace; font-size: 13px; }
+    </style>
 </head>
 <body>
 
-  <div class="container">
-    <h1>🌱 Sprout: Automação Inteligente e Privada para o Agro</h1>
-    <p>Plataforma DeFi unindo IoT no campo e privacidade de crédito com Zcash.</p>
+<div class="container">
+    <h1>🌱 Sprout - Painel do Produtor</h1>
+    <p style="text-align: center; color: #666;">Gestão de IoT, Alertas Críticos e Vouchers Zcash (ZIP-321)</p>
 
-    <div class="panel">
-      <h3>Simulação de Alerta de Solo & Voucher Blindado (Zcash)</h3>
-      <p>Clique no botão abaixo para simular um sensor de solo enviando um nível crítico de umidade (12%) para o back-end no Render:</p>
-      
-      <button id="btnSimular">Simular Sensor Crítico e Gerar Voucher</button>
-      
-      <h4>Resultado da API:</h4>
-      <pre id="resultado">Aguardando ação...</pre>
+    <!-- CADASTRO DE PRODUTOR -->
+    <div class="section">
+        <h3>1. Cadastrar Novo Produtor</h3>
+        <form id="formProdutor">
+            <input type="text" id="nome" placeholder="Nome do Produtor (ex: João da Silva)" required>
+            <input type="text" id="localizacao" placeholder="Localização / Fazenda (ex: Fazenda Boa Vista)">
+            <input type="text" id="telegram_chat_id" placeholder="Telegram Chat ID (ex: 123456789)">
+            <button type="submit">Cadastrar Produtor</button>
+        </form>
     </div>
-  </div>
 
-  <script>
-    // Substitua 'SEU-APP-NO-RENDER.onrender.com' pela URL real do seu serviço no Render
-    const URL_BACKEND = 'https://sprout-backend-qloh.onrender.com/api/alerta-solo';
+    <!-- LISTA DE PRODUTORES E SIMULAÇÃO DE ALERTA -->
+    <div class="section">
+        <h3>2. Produtores Cadastrados & Simulação de Alerta</h3>
+        <button onclick="carregarProdutores()" style="background-color: #2980b9; margin-bottom: 10px;">Atualizar Lista</button>
+        <table>
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Localização</th>
+                    <th>Telegram ID</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="tabelaProdutores">
+                <tr><td colspan="4" style="text-align: center;">Clique em "Atualizar Lista" para carregar.</td></tr>
+            </tbody>
+        </table>
+    </div>
 
-    document.getElementById('btnSimular').addEventListener('click', async () => {
-      const resultadoPre = document.getElementById('resultado');
-      resultadoPre.textContent = "Enviando telemetria para o servidor no Render...";
+    <!-- LOG DE RETORNO -->
+    <div class="section">
+        <h3>3. Log de Execução / Resposta da API</h3>
+        <div id="resultado">Aguardando ações...</div>
+    </div>
+</div>
 
-      try {
-        const resposta = await fetch(URL_BACKEND, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            produtorId: "produtor_joao_silva",
-            umidade: 12, // Abaixo de 20% dispara o alerta crítico
-            valorInsumos: 750
-          })
-        });
+<script>
+    // URL da API (use localhost se testar local, ou a URL do Render quando publicar)
+    const API_URL = ''; // Deixe vazio se abrir via servidor local apontando para a mesma porta, ou ponha a URL do Render
 
-        const dados = await resposta.json();
-        resultadoPre.textContent = JSON.stringify(dados, null, 2);
-      } catch (erro) {
-        resultadoPre.textContent = "Erro ao conectar com o back-end: " + erro.message + "\n\nVerifique se a URL do Render está correta.";
-      }
+    async function carregarProdutores() {
+        try {
+            const res = await fetch('/api/produtores');
+            const data = await res.json();
+            const tbody = document.getElementById('tabelaProdutores');
+            tbody.innerHTML = '';
+
+            if (!data.produtores || data.produtores.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Nenhum produtor cadastrado.</td></tr>';
+                return;
+            }
+
+            data.produtores.forEach(p => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${p.nome}</td>
+                    <td>${p.localizacao || '-'}</td>
+                    <td>${p.telegram_chat_id || '-'}</td>
+                    <td>
+                        <button class="alert" onclick="simularAlerta('${p.id}', '${p.nome}', '${p.telegram_chat_id || ''}')">Simular Alerta Crítico</button>
+                        <button class="delete" onclick="excluirProdutor('${p.id}')">Excluir</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } catch (err) {
+            console.error(err);
+            alert('Erro ao carregar produtores.');
+        }
+    }
+
+    document.getElementById('formProdutor').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const nome = document.getElementById('nome').value;
+        const localizacao = document.getElementById('localizacao').value;
+        const telegram_chat_id = document.getElementById('telegram_chat_id').value;
+
+        try {
+            const res = await fetch('/api/produtores', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nome, localizacao, telegram_chat_id })
+            });
+            const data = await res.json();
+            if (data.sucesso) {
+                alert('Produtor cadastrado com sucesso!');
+                document.getElementById('formProdutor').reset();
+                carregarProdutores();
+            } else {
+                alert('Erro: ' + data.erro);
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Erro ao comunicar com o servidor.');
+        }
     });
-  </script>
+
+    async function excluirProdutor(id) {
+        if (!confirm('Deseja realmente excluir este produtor?')) return;
+        try {
+            const res = await fetch(`/api/produtores/${id}`, { method: 'DELETE' });
+            const data = await res.json();
+            if (data.sucesso) {
+                carregarProdutores();
+            } else {
+                alert('Erro ao excluir: ' + data.erro);
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    async function simularAlerta(producerId, nomeProdutor, telegramChatId) {
+        document.getElementById('resultado').innerText = "Processando alerta crítico e gerando URI ZIP-321...";
+        try {
+            const res = await fetch('/api/alerta-solo', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    producerId: producerId,
+                    nomeProdutor: nomeProdutor,
+                    umidade: 15, // Força um valor crítico (<= 20%) para disparar o voucher e o Telegram
+                    valorInsumos: 500,
+                    telegramChatId: telegramChatId
+                })
+            });
+            const data = await res.json();
+            document.getElementById('resultado').innerText = JSON.stringify(data, null, 2);
+        } catch (err) {
+            console.error(err);
+            document.getElementById('resultado').innerText = "Erro ao simular alerta.";
+        }
+    }
+
+    // Carrega a lista automaticamente ao abrir a página
+    window.onload = carregarProdutores;
+</script>
 
 </body>
 </html>

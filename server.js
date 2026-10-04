@@ -183,7 +183,8 @@ app.post('/api/alerta-solo', async (req, res) => {
     return res.status(500).json({ sucesso: false, erro: erro.message });
   }
 });
-
+// Servir arquivos estáticos (como o index.html na raiz)
+app.use(express.static(__dirname));
 // Inicialização do Servidor
 app.listen(PORT, () => {
   console.log(`🚀 Servidor Sprout rodando na porta ${PORT}`);
