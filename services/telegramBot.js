@@ -1,7 +1,11 @@
 const TelegramBot = require('node-telegram-bot-api');
 
-// Token do seu bot gerado pelo BotFather
-const TOKEN = process.env.TELEGRAM_TOKEN || '8755213783:AAFUE3SxbLdtn0pCJHZXKZmEdAFQoaV60FE';
+// Token do seu bot gerado pelo BotFather (carregado das variáveis de ambiente)
+const TOKEN = process.env.TELEGRAM_TOKEN;
+
+if (!TOKEN) {
+    console.error("ERRO: TELEGRAM_TOKEN não configurado nas variáveis de ambiente!");
+}
 
 // Inicializa o bot corretamente
 const bot = new TelegramBot(TOKEN, { polling: true });
